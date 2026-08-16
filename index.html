@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="SANDEUL의 일곱 가지 룩을 영상으로 감상하고 구성 제품을 확인하는 인터랙티브 룩북"
+    />
+    <meta name="theme-color" content="#f5f3ee" />
+    <title>SANDEUL LOOKBOOK — SANDEUL CORE</title>
+    <link rel="icon" href="public/lookbook/brand/sandeul-logo-green.webp" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+
+    <header class="site-header">
+      <a class="brand" href="?look=01" aria-label="SANDEUL 룩북 첫 번째 룩으로 이동">
+        <img
+          src="public/lookbook/brand/sandeul-logo-green-header-final.webp"
+          width="999"
+          height="500"
+          alt="SANDEUL"
+        />
+      </a>
+      <p class="collection-label"><span>COLLECTION</span> 01 · THE SHAPE OF NOW</p>
+      <button class="icon-button share-button" type="button" aria-label="현재 룩 링크 공유">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M18 8a3 3 0 1 0-2.83-4A3 3 0 0 0 15 5c0 .2.02.4.06.58L8.9 9.1A3 3 0 0 0 4 11.5a3 3 0 0 0 4.9 2.32l6.16 3.52A3 3 0 0 0 15 18a3 3 0 1 0 .9-2.14l-6.1-3.49c.13-.57.1-1.14-.08-1.67l6.14-3.51A3 3 0 0 0 18 8Z" />
+        </svg>
+      </button>
+    </header>
+
+    <main id="main-content" class="lookbook-shell">
+      <aside class="look-rail" aria-labelledby="look-rail-title">
+        <div class="rail-heading">
+          <p class="eyebrow">THE EDIT</p>
+          <h2 id="look-rail-title">Seven looks</h2>
+          <p>일곱 장면으로 기록한 지금의 실루엣.</p>
+        </div>
+        <nav id="desktop-look-list" class="desktop-look-list" aria-label="룩 선택"></nav>
+        <div class="rail-navigation" aria-label="이전 또는 다음 룩">
+          <button id="previous-look" type="button" aria-label="이전 룩">
+            <span aria-hidden="true">←</span> PREV
+          </button>
+          <span id="rail-position">01 / 07</span>
+          <button id="next-look" type="button" aria-label="다음 룩">
+            NEXT <span aria-hidden="true">→</span>
+          </button>
+        </div>
+        <div class="rail-signature">
+          <img
+            src="public/lookbook/brand/sandeul-logo-black.webp"
+            width="260"
+            height="90"
+            alt=""
+          />
+          <p>지금의 움직임을<br />옷의 형태로 기록합니다.</p>
+        </div>
+      </aside>
+
+      <section class="stage" aria-label="선택한 룩 영상">
+        <div class="video-frame">
+          <div class="video-meta" aria-hidden="true">
+            <span>LOOK <b id="video-number">01</b></span>
+            <span>SANDEUL · 2026</span>
+          </div>
+          <video
+            id="look-video"
+            autoplay
+            muted
+            loop
+            playsinline
+            controls
+            preload="metadata"
+            aria-label="SANDEUL CORE 착장 영상"
+          ></video>
+          <div
+            id="scrub-surface"
+            class="scrub-surface"
+            role="slider"
+            tabindex="0"
+            aria-label="모델 360도 회전 프레임 탐색"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            aria-valuetext="영상의 0퍼센트 지점"
+            aria-orientation="horizontal"
+          >
+            <div class="scrub-hint" aria-hidden="true">
+              <span>↔</span>
+              <strong>360° DRAG</strong>
+              <output id="scrub-readout">0%</output>
+            </div>
+          </div>
+          <div id="video-fallback" class="video-fallback" hidden>
+            <img id="fallback-image" src="" alt="" />
+            <div>
+              <strong>STILL IN MOTION</strong>
+              <p>영상을 불러오지 못해 룩 이미지를 표시합니다.</p>
+            </div>
+          </div>
+          <div class="video-caption" aria-hidden="true">
+            <span>MOTION STUDY</span>
+            <span id="video-duration">00:06</span>
+          </div>
+        </div>
+
+        <section class="mobile-look-section" aria-labelledby="mobile-look-title">
+          <div class="mobile-section-heading">
+            <div>
+              <p class="eyebrow">SELECT A LOOK</p>
+              <h2 id="mobile-look-title">룩 선택</h2>
+            </div>
+            <span id="mobile-position">01 / 07</span>
+          </div>
+          <nav id="mobile-look-list" class="mobile-look-list" aria-label="룩 선택"></nav>
+        </section>
+      </section>
+
+      <aside class="details-panel" aria-labelledby="look-title">
+        <div class="look-copy">
+          <div class="look-kicker">
+            <span id="look-number">No.01</span>
+            <span id="look-name-ko">산들 코어</span>
+          </div>
+          <h1 id="look-title">SANDEUL CORE</h1>
+          <p id="look-description" class="look-description"></p>
+          <ul id="look-keywords" class="keyword-list" aria-label="룩 키워드"></ul>
+        </div>
+
+        <section class="desktop-products" aria-labelledby="desktop-products-title">
+          <div class="products-heading">
+            <div>
+              <p class="eyebrow">WORN IN THIS LOOK</p>
+              <h2 id="desktop-products-title">착장 제품</h2>
+            </div>
+            <span id="desktop-product-count">5 ITEMS</span>
+          </div>
+          <div id="desktop-product-list" class="product-list"></div>
+        </section>
+      </aside>
+    </main>
+
+    <button id="open-products" class="mobile-product-trigger" type="button">
+      <span>이 룩의 제품 <b id="mobile-product-count">5</b>개 보기</span>
+      <span aria-hidden="true">↑</span>
+    </button>
+
+    <dialog id="product-sheet" class="product-sheet" aria-labelledby="sheet-title">
+      <div class="sheet-content">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <header class="sheet-header">
+          <div>
+            <p class="eyebrow">WORN IN THIS LOOK</p>
+            <h2 id="sheet-title">착장 제품</h2>
+            <p id="sheet-subtitle"></p>
+          </div>
+          <button id="close-products" class="icon-button" type="button" aria-label="제품 목록 닫기">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="m6 6 12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </header>
+        <div id="sheet-product-list" class="sheet-product-list"></div>
+      </div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <noscript>
+      <p class="noscript-message">이 룩북을 감상하려면 브라우저에서 JavaScript를 켜주세요.</p>
+    </noscript>
+  </body>
+</html>
