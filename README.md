@@ -23,7 +23,7 @@ python -m http.server 4173
 - `app.js`: 7개 룩 데이터와 상호작용
 - `public/lookbook/thumbnails/`: 룩 WebP 썸네일
 - `public/lookbook/products/cards/`: 제품 카드 WebP 이미지
-- `public/lookbook/videos/`: 룩 영상 사본
+- `public/lookbook/videos/`: 원본 사본과 빠른 드래그 탐색용 `*_scrub.mp4`
 - `public/lookbook/brand/`: 투명 WebP 로고
 - `scripts/prepare_app_assets.py`: 제품 카드·로고·영상 준비 스크립트
 

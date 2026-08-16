@@ -1,4 +1,6 @@
 const SHOP_URL = "https://shopping.naver.com/ns/home";
+const SCRUB_SENSITIVITY = 1.55;
+const SCRUB_FRAME_INTERVAL = 1000 / 30;
 
 const looks = [
   {
@@ -9,7 +11,7 @@ const looks = [
       "블랙 크롭 톱과 올리브 카고 팬츠에 샌드 컬러 액세서리를 더한 대표 어반 유틸리티 룩. 간결한 상체와 볼륨감 있는 하의가 선명한 대비를 만듭니다.",
     keywords: ["URBAN", "UTILITY", "CARGO", "MONO TONE", "TECHNICAL"],
     thumbnail: "public/lookbook/thumbnails/01_01.webp",
-    video: "public/lookbook/videos/01_02.mp4",
+    video: "public/lookbook/videos/01_02_scrub.mp4",
     duration: "00:06",
     products: [
       product("01_headband", "블랙 헤드밴드", "액세서리", "블랙"),
@@ -27,7 +29,7 @@ const looks = [
       "브라운 크롭 톱과 베이지 와이드 카고 팬츠를 조합한 따뜻하고 담백한 데일리 유틸리티 룩. 넓게 떨어지는 팬츠가 편안한 움직임을 강조합니다.",
     keywords: ["SAND", "EARTH TONE", "WIDE FIT", "CARGO", "MINIMAL"],
     thumbnail: "public/lookbook/thumbnails/02_01.webp",
-    video: "public/lookbook/videos/02_02.mp4",
+    video: "public/lookbook/videos/02_02_scrub.mp4",
     duration: "00:06",
     products: [
       product("02_top", "브라운 크롭 탱크톱", "상의", "브라운"),
@@ -43,7 +45,7 @@ const looks = [
       "토프 니트와 아이보리 와이드 팬츠를 중심으로 부드러운 중성 색상을 겹친 시티 캐주얼 룩. 그래픽 토트백과 볼캡이 편안한 리듬을 더합니다.",
     keywords: ["NEUTRAL", "KNIT", "IVORY", "RELAXED", "CITY CASUAL"],
     thumbnail: "public/lookbook/thumbnails/03_01.webp",
-    video: "public/lookbook/videos/03_02.mp4",
+    video: "public/lookbook/videos/03_02_scrub.mp4",
     duration: "00:08",
     products: [
       product("03_knit", "토프 반소매 니트 폴로", "상의", "토프"),
@@ -61,7 +63,7 @@ const looks = [
       "오트밀 오버핏 후디와 블랙 바이커 쇼츠를 조합한 가벼운 애슬레저 룩. 뉴트럴 액세서리로 운동과 일상의 경계를 편안하게 연결합니다.",
     keywords: ["ATHLEISURE", "HOODIE", "ACTIVE", "COMFORT", "NEUTRAL"],
     thumbnail: "public/lookbook/thumbnails/04_01.webp",
-    video: "public/lookbook/videos/04_02.mp4",
+    video: "public/lookbook/videos/04_02_scrub.mp4",
     duration: "00:06",
     products: [
       product("04_hoodie", "오트밀 오버핏 후디", "상의", "오트밀"),
@@ -79,7 +81,7 @@ const looks = [
       "블러시 핑크 체크 셔츠와 짙은 인디고 와이드 데님을 매치한 부드러운 위켄드 룩. 아이보리와 골드 액세서리가 밝고 단정한 인상을 완성합니다.",
     keywords: ["BLUSH", "CHECK", "DENIM", "WEEKEND", "FEMININE CASUAL"],
     thumbnail: "public/lookbook/thumbnails/05_01.webp",
-    video: "public/lookbook/videos/05_02.mp4",
+    video: "public/lookbook/videos/05_02_scrub.mp4",
     duration: "00:06",
     products: [
       product("05_shirt", "블러시 체크 셔츠", "상의", "블러시 핑크"),
@@ -98,7 +100,7 @@ const looks = [
       "아이보리 스트라이프 카디건과 화이트 와이드 팬츠로 톤을 맞춘 깨끗한 레이어드 룩. 브라운 벨트가 밝은 색조에 차분한 중심을 만듭니다.",
     keywords: ["IVORY", "TONE ON TONE", "CARDIGAN", "CLEAN", "WEEKEND"],
     thumbnail: "public/lookbook/thumbnails/06_01.webp",
-    video: "public/lookbook/videos/06_02.mp4",
+    video: "public/lookbook/videos/06_02_scrub.mp4",
     duration: "00:06",
     products: [
       product("06_cardigan", "아이보리 스트라이프 카디건", "상의", "아이보리"),
@@ -117,7 +119,7 @@ const looks = [
       "올리브 퀼팅 베스트와 카고 팬츠에 브라운 워크 부츠를 더한 필드 유틸리티 룩. 아이보리 티셔츠가 묵직한 올리브 톤 사이에 밝은 균형을 만듭니다.",
     keywords: ["FIELD", "LAYER", "OLIVE", "QUILTED", "WORKWEAR"],
     thumbnail: "public/lookbook/thumbnails/07_01.webp",
-    video: "public/lookbook/videos/07_02.mp4",
+    video: "public/lookbook/videos/07_02_scrub.mp4",
     duration: "00:06",
     products: [
       product("07_vest", "올리브 퀼팅 베스트", "아우터", "올리브"),
@@ -183,6 +185,7 @@ const scrubState = {
   duration: 0,
   wasPlaying: false,
   animationFrameId: 0,
+  lastSeekAt: 0,
 };
 
 let themeSampleId = 0;
@@ -461,12 +464,27 @@ function updateScrubReadout(time = elements.video.currentTime) {
   elements.scrubSurface.setAttribute("aria-valuetext", `영상의 ${boundedPercent}퍼센트 지점`);
 }
 
-function applyPendingScrubTime() {
+function applyPendingScrubTime(timestamp = performance.now(), forceExact = false) {
   scrubState.animationFrameId = 0;
   if (!Number.isFinite(scrubState.pendingTime)) return;
-  if (Math.abs(elements.video.currentTime - scrubState.pendingTime) > 1 / 120) {
-    elements.video.currentTime = scrubState.pendingTime;
+
+  if (!forceExact && scrubState.active && timestamp - scrubState.lastSeekAt < SCRUB_FRAME_INTERVAL) {
+    scrubState.animationFrameId = window.requestAnimationFrame(applyPendingScrubTime);
+    return;
   }
+
+  if (Math.abs(elements.video.currentTime - scrubState.pendingTime) > 1 / 120) {
+    if (!forceExact && scrubState.active && typeof elements.video.fastSeek === "function") {
+      try {
+        elements.video.fastSeek(scrubState.pendingTime);
+      } catch (error) {
+        elements.video.currentTime = scrubState.pendingTime;
+      }
+    } else {
+      elements.video.currentTime = scrubState.pendingTime;
+    }
+  }
+  scrubState.lastSeekAt = timestamp;
   updateScrubReadout(scrubState.pendingTime);
 }
 
@@ -488,6 +506,7 @@ function beginScrub(event) {
   scrubState.pendingTime = elements.video.currentTime;
   scrubState.duration = duration;
   scrubState.wasPlaying = !elements.video.paused;
+  scrubState.lastSeekAt = 0;
   elements.video.pause();
   elements.videoFrame.classList.add("is-scrubbing");
   elements.scrubSurface.setPointerCapture(event.pointerId);
@@ -499,7 +518,7 @@ function moveScrub(event) {
   const dragWidth = Math.max(elements.scrubSurface.clientWidth, 1);
   const distance = event.clientX - scrubState.startX;
   const targetTime = normalizeScrubTime(
-    scrubState.startTime + (distance / dragWidth) * scrubState.duration,
+    scrubState.startTime + (distance / dragWidth) * scrubState.duration * SCRUB_SENSITIVITY,
     scrubState.duration,
   );
   scheduleScrubFrame(targetTime);
@@ -523,8 +542,8 @@ function cancelScrub(resumePlayback = true, applyFinalFrame = true) {
     return;
   }
 
-  scrubState.animationFrameId = window.requestAnimationFrame(() => {
-    applyPendingScrubTime();
+  scrubState.animationFrameId = window.requestAnimationFrame((timestamp) => {
+    applyPendingScrubTime(timestamp, true);
     if (shouldResume && elements.videoFallback.hidden) {
       elements.video.play().catch(() => {});
     }
