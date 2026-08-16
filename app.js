@@ -1,6 +1,8 @@
 const SHOP_URL = "https://shopping.naver.com/ns/home";
 const SCRUB_SENSITIVITY = 1.55;
 const SCRUB_FRAME_INTERVAL = 1000 / 30;
+const LOOK_TRANSITION_DURATION = 760;
+const LOOK_TRANSITION_ROTATIONS = 1.4;
 
 const looks = [
   {
@@ -147,6 +149,7 @@ const elements = {
   mobileLookList: document.querySelector("#mobile-look-list"),
   videoFrame: document.querySelector(".video-frame"),
   video: document.querySelector("#look-video"),
+  detailsPanel: document.querySelector(".details-panel"),
   scrubSurface: document.querySelector("#scrub-surface"),
   scrubReadout: document.querySelector("#scrub-readout"),
   videoFallback: document.querySelector("#video-fallback"),
@@ -188,6 +191,12 @@ const scrubState = {
   lastSeekAt: 0,
 };
 
+const lookTransitionState = {
+  active: false,
+  animationFrameId: 0,
+  audioContext: null,
+};
+
 let themeSampleId = 0;
 
 function getInitialIndex() {
@@ -210,7 +219,7 @@ function createLookCard(look, mobile = false) {
     </span>
     <span class="look-card-number" aria-hidden="true">${look.id}</span>
   `;
-  button.addEventListener("click", () => selectLookById(look.id, true, mobile));
+  button.addEventListener("click", () => transitionToLookById(look.id, true, mobile, true));
   return button;
 }
 
@@ -402,6 +411,154 @@ function selectLookById(id, updateHistory = true, scrollMobile = false) {
   selectLook(index >= 0 ? index : 0, updateHistory, scrollMobile);
 }
 
+function wait(duration) {
+  return new Promise((resolve) => window.setTimeout(resolve, duration));
+}
+
+function easeInOutQuint(progress) {
+  return progress < 0.5
+    ? 16 * progress ** 5
+    : 1 - (-2 * progress + 2) ** 5 / 2;
+}
+
+async function playWhooshSound() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+
+  try {
+    lookTransitionState.audioContext ||= new AudioContextClass();
+    const context = lookTransitionState.audioContext;
+    if (context.state === "suspended") await context.resume();
+
+    const duration = 0.42;
+    const frameCount = Math.ceil(context.sampleRate * duration);
+    const buffer = context.createBuffer(1, frameCount, context.sampleRate);
+    const samples = buffer.getChannelData(0);
+    for (let index = 0; index < frameCount; index += 1) {
+      const progress = index / frameCount;
+      const envelope = Math.sin(Math.PI * progress) ** 1.6;
+      samples[index] = (Math.random() * 2 - 1) * envelope;
+    }
+
+    const source = context.createBufferSource();
+    const filter = context.createBiquadFilter();
+    const gain = context.createGain();
+    const panner = typeof context.createStereoPanner === "function" ? context.createStereoPanner() : null;
+    const now = context.currentTime;
+
+    source.buffer = buffer;
+    filter.type = "bandpass";
+    filter.Q.value = 0.8;
+    filter.frequency.setValueAtTime(360, now);
+    filter.frequency.exponentialRampToValueAtTime(2200, now + 0.19);
+    filter.frequency.exponentialRampToValueAtTime(620, now + duration);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    source.connect(filter);
+    if (panner) {
+      panner.pan.setValueAtTime(-0.65, now);
+      panner.pan.linearRampToValueAtTime(0.65, now + duration);
+      filter.connect(panner);
+      panner.connect(gain);
+    } else {
+      filter.connect(gain);
+    }
+    gain.connect(context.destination);
+    source.start(now);
+    source.stop(now + duration);
+  } catch (error) {
+    // 오디오 재생이 차단되어도 룩 전환은 계속 진행한다.
+  }
+}
+
+function spinCurrentModel() {
+  const video = elements.video;
+  const duration = video.duration;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion || !Number.isFinite(duration) || duration <= 0 || video.readyState < 2) {
+    return wait(reduceMotion ? 0 : 180);
+  }
+
+  const startVideoTime = video.currentTime;
+  const wasPlaying = !video.paused;
+  video.pause();
+
+  return new Promise((resolve) => {
+    const startedAt = performance.now();
+    let lastSeekAt = 0;
+
+    const step = (timestamp) => {
+      const progress = Math.min(1, (timestamp - startedAt) / LOOK_TRANSITION_DURATION);
+      const easedProgress = easeInOutQuint(progress);
+
+      if (timestamp - lastSeekAt >= SCRUB_FRAME_INTERVAL || progress === 1) {
+        const targetTime = normalizeScrubTime(
+          startVideoTime + easedProgress * duration * LOOK_TRANSITION_ROTATIONS,
+          duration,
+        );
+        try {
+          if (typeof video.fastSeek === "function" && progress < 1) video.fastSeek(targetTime);
+          else video.currentTime = targetTime;
+        } catch (error) {
+          // 다음 애니메이션 프레임에서 최신 목표 시간으로 다시 시도한다.
+        }
+        lastSeekAt = timestamp;
+      }
+
+      if (progress < 1) {
+        lookTransitionState.animationFrameId = window.requestAnimationFrame(step);
+      } else {
+        lookTransitionState.animationFrameId = 0;
+        if (wasPlaying) video.play().catch(() => {});
+        resolve();
+      }
+    };
+
+    lookTransitionState.animationFrameId = window.requestAnimationFrame(step);
+  });
+}
+
+async function transitionToLook(index, updateHistory = true, scrollMobile = false, withSound = true) {
+  const targetIndex = (index + looks.length) % looks.length;
+  if (targetIndex === currentIndex || lookTransitionState.active) return;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  lookTransitionState.active = true;
+  elements.videoFrame.setAttribute("aria-busy", "true");
+  elements.detailsPanel.setAttribute("aria-busy", "true");
+
+  try {
+    if (!reduceMotion) {
+      if (withSound) playWhooshSound();
+      elements.videoFrame.classList.add("is-look-transitioning");
+      elements.detailsPanel.classList.add("is-detail-leaving");
+      await spinCurrentModel();
+    }
+
+    selectLook(targetIndex, updateHistory, scrollMobile);
+    elements.detailsPanel.classList.remove("is-detail-leaving");
+
+    if (!reduceMotion) {
+      void elements.detailsPanel.offsetWidth;
+      elements.detailsPanel.classList.add("is-detail-entering");
+      await wait(520);
+    }
+  } finally {
+    elements.videoFrame.classList.remove("is-look-transitioning");
+    elements.detailsPanel.classList.remove("is-detail-leaving", "is-detail-entering");
+    elements.videoFrame.removeAttribute("aria-busy");
+    elements.detailsPanel.removeAttribute("aria-busy");
+    lookTransitionState.active = false;
+  }
+}
+
+function transitionToLookById(id, updateHistory = true, scrollMobile = false, withSound = true) {
+  const index = looks.findIndex((look) => look.id === id);
+  transitionToLook(index >= 0 ? index : 0, updateHistory, scrollMobile, withSound);
+}
+
 function showVideoFallback() {
   cancelScrub(false, false);
   elements.video.hidden = true;
@@ -590,8 +747,8 @@ elements.scrubSurface.addEventListener("pointerup", endScrub);
 elements.scrubSurface.addEventListener("pointercancel", endScrub);
 elements.scrubSurface.addEventListener("lostpointercapture", endScrub);
 elements.scrubSurface.addEventListener("keydown", scrubWithKeyboard);
-elements.previousLook.addEventListener("click", () => selectLook(currentIndex - 1, true, true));
-elements.nextLook.addEventListener("click", () => selectLook(currentIndex + 1, true, true));
+elements.previousLook.addEventListener("click", () => transitionToLook(currentIndex - 1, true, true, true));
+elements.nextLook.addEventListener("click", () => transitionToLook(currentIndex + 1, true, true, true));
 elements.openProducts.addEventListener("click", openProductSheet);
 elements.closeProducts.addEventListener("click", closeProductSheet);
 elements.productSheet.addEventListener("close", () => {
@@ -605,8 +762,8 @@ elements.shareButtons.forEach((button) => button.addEventListener("click", share
 
 window.addEventListener("keydown", (event) => {
   if (elements.productSheet.open || event.altKey || event.ctrlKey || event.metaKey) return;
-  if (event.key === "ArrowLeft") selectLook(currentIndex - 1, true, true);
-  if (event.key === "ArrowRight") selectLook(currentIndex + 1, true, true);
+  if (event.key === "ArrowLeft") transitionToLook(currentIndex - 1, true, true, false);
+  if (event.key === "ArrowRight") transitionToLook(currentIndex + 1, true, true, false);
 });
 
 window.addEventListener("popstate", () => {
