@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f7f2">
+  <meta name="description" content="산들의 일곱 가지 착장을 영상으로 살펴보고 마음에 드는 제품을 가까이 확인하세요.">
+  <title>SANDEUL · 일곱 가지 일상</title>
+  <link rel="icon" href="public/lookbook/brand/sandeul-logo-green.webp">
+  <link rel="stylesheet" href="lookbook-minimal.css">
+  <script src="lookbook-minimal-data.js" defer></script>
+  <script src="lookbook-minimal.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#products">제품 목록으로 바로가기</a>
+  <header class="site-header">
+    <a class="brand" href="?look=01" aria-label="산들 첫 번째 룩"><img src="public/lookbook/brand/sandeul-logo-green-header-final.webp" width="999" height="500" alt="SANDEUL"></a>
+    <p>지금의 움직임을<br><span>옷의 형태로 기록합니다.</span></p>
+    <span class="edition">산들 컬렉션 <b>01</b></span>
+  </header>
+  <main class="lookbook">
+    <aside class="rail" aria-labelledby="rail-title">
+      <div class="rail-heading"><span class="eyebrow">일곱 가지 일상</span><h2 id="rail-title">오늘의 룩을<br>발견하세요.</h2><p>마음에 드는 장면부터.</p></div>
+      <nav id="look-list" aria-label="일곱 가지 룩 선택"></nav>
+      <p class="rail-note">옷의 실루엣에서<br>작은 디테일까지.</p>
+    </aside>
+    <section class="stage" aria-label="착장 영상">
+      <div class="stage-top"><span>움직임으로 보는 착장</span><span id="stage-count">01 / 07</span></div>
+      <div class="video-frame">
+        <video id="look-video" autoplay muted loop playsinline controls preload="metadata" aria-label="선택한 룩 착장 영상"></video>
+        <div id="rotation-surface" class="rotation-surface" role="slider" tabindex="-1" aria-label="모델 회전 장면 탐색" aria-describedby="rotation-help" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="영상의 0퍼센트 지점" aria-disabled="true">
+          <span class="rotation-hint" aria-hidden="true">↔ 좌우로 드래그해 회전 <span id="rotation-progress">0%</span></span>
+        </div>
+        <span id="rotation-help" class="sr-only">마우스나 손가락을 좌우로 움직여 회전 장면을 탐색하세요. 키보드 좌우 방향키로 한 프레임씩 이동할 수 있습니다.</span>
+        <div id="video-fallback" hidden><img id="fallback-image" alt="선택한 룩 구성 이미지"><p>영상을 불러오지 못했습니다.<br>아래에서 제품을 계속 확인할 수 있어요.</p></div>
+        <span class="stage-mark" aria-hidden="true">SANDEUL</span>
+      </div>
+      <div class="stage-navigation"><button id="previous-look" type="button">← <span>이전 룩</span></button><p>다른 일상, 같은 나다움.</p><button id="next-look" type="button"><span>다음 룩</span> →</button></div>
+      <p id="video-status" class="video-status" role="status"></p>
+    </section>
+    <section class="details" aria-labelledby="look-title">
+      <div class="look-heading"><span class="eyebrow" id="look-number">룩 01</span><p id="look-name-en" class="english-name"></p><h1 id="look-title"></h1><p id="look-description" class="description"></p><ul id="look-tags" class="tags" aria-label="룩 특징"></ul></div>
+      <section id="products" class="products" aria-labelledby="products-title" tabindex="-1">
+        <div class="products-heading"><h2 id="products-title">이 룩의 제품 <span id="product-count"></span></h2><span>사진을 눌러 자세히</span></div>
+        <p class="product-note">착장 구성 참고용입니다. 상품명·판매 정보는 준비 중이에요.</p>
+        <div id="product-list"></div>
+      </section>
+    </section>
+  </main>
+  <footer><span>SANDEUL</span><p>취향을 발견하는 일곱 장면.</p><span>컬렉션 01</span></footer>
+  <button id="jump-products" class="mobile-cta" type="button"><span>이 룩의 제품 <b id="mobile-product-count"></b>개 보기</span><span aria-hidden="true">↓</span></button>
+  <dialog id="product-dialog" aria-labelledby="dialog-title">
+    <button id="close-dialog" type="button" class="close-button" aria-label="제품 상세 닫기">닫기 <span aria-hidden="true">×</span></button>
+    <div class="dialog-grid"><div class="dialog-image-wrap"><img id="dialog-image" alt=""></div><div class="dialog-copy"><span id="dialog-category" class="eyebrow"></span><h2 id="dialog-title"></h2><p id="dialog-color"></p><p class="dialog-note">제공된 룩 이미지에서 확인한 구성품입니다. 이름과 컬러는 이미지를 설명하는 표현이며, 공식 상품 정보가 아닙니다.</p><a id="dialog-link" hidden target="_blank" rel="noopener noreferrer">판매처에서 자세히 보기 ↗</a><p id="link-pending" class="link-pending">판매 정보 준비 중</p></div></div>
+  </dialog>
+  <p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
+  <noscript><p class="noscript">룩 선택 기능을 사용하려면 브라우저의 자바스크립트를 켜주세요. <a href="03_01.png">3번 룩 이미지 보기</a></p></noscript>
+</body>
+</html>
